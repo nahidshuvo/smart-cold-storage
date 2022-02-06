@@ -1,0 +1,119 @@
+#include <Servo.h>
+#include <LiquidCrystal.h>
+Servo door;
+int sensorValue = 0;
+int pirf=9;
+int pirb=10;
+int D = 0;
+int ldr=A1;
+int value=0;
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+int val = A4;
+int buzzer = 5;
+int sensePin = A2; 
+int sensorInput; 
+double temp;
+
+void DC()
+{
+  D++;
+  lcd.setCursor(11,0);
+  lcd.print(D); 
+  delay(2000);  
+}
+
+long readUltrasonicDistance(int triggerPin, int echoPin)
+{
+  pinMode(triggerPin, OUTPUT);  
+  digitalWrite(triggerPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(triggerPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(triggerPin, LOW);
+  pinMode(echoPin, INPUT);
+  return pulseIn(echoPin, HIGH);
+}
+
+void setup()
+{
+  pinMode(pirf,INPUT);
+  pinMode(pirb,INPUT);
+  pinMode(13, OUTPUT);
+  pinMode(6, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode (A3,OUTPUT);
+  pinMode (A4,INPUT);
+  door.attach(8);
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+}
+
+void loop()
+{
+   analogWrite(13, map(sensorValue, 0, 1023, 0, 255));
+   analogWrite(7, map(sensorValue, 0, 1023, 0, 255));
+   if ( 0.01723 * readUltrasonicDistance(A5, A5) < 100)
+  {
+    digitalWrite(13, HIGH);
+    digitalWrite(7, LOW); 
+  }
+  else if ( 0.01723 * readUltrasonicDistance(A5, A5) < 200)
+  {
+    digitalWrite(13, HIGH);
+    digitalWrite(7, HIGH);
+  }
+  
+   
+  int signalf = digitalRead(pirf);
+  int signalb = digitalRead(pirb);
+  
+  if(signalf==HIGH || signalb==HIGH)
+  {
+    door.write(90);
+    DC();
+    delay(5000);
+  }
+  else
+  {
+    door.write(0);
+  }
+  delay(10);
+  
+  lcd.setCursor(0, 0);
+  lcd.print("Door Open:");
+  
+  value=analogRead(ldr);
+  Serial.println("LDR value is :");
+  Serial.println(value);
+   if(value<300)
+  {
+    digitalWrite(6,HIGH);
+  }
+   else
+  {
+    digitalWrite(6,LOW);
+  }
+  
+  lcd.setCursor(0, 1);
+  sensorInput = analogRead(A2);
+  temp = (double)sensorInput / 1024;
+  temp = temp * 5;
+  temp = temp - 0.5;
+  temp = temp * 100;
+  lcd.print("Temp: ");
+  lcd.setCursor(6, 1);
+  lcd.print(temp);
+  
+  val = analogRead (A4);
+  if (val <500 )
+  {
+    digitalWrite (A3, LOW);
+  }
+  else 
+  {
+    digitalWrite(A3, HIGH);
+    tone(buzzer, 1000);
+    delay (200);
+    noTone(buzzer);
+  }
+}
